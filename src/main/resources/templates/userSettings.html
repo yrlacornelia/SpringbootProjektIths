@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<img src="../static/images/profile.jpeg" th:src="@{images/profile.jpeg}" alt="no image right now">
+<form action="/upload" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" accept="image/*">
+    <button type="submit">Upload</button>
+</form>
+
+<form action="#" th:action="@{/userSettings}" th:object="${userData}" method="post">
+    
+    <label for="fullName">Full Name:</label>
+    <input id="fullName" type="text" th:field="*{fullName}" />
+
+    <label for="userName">username:</label>
+    <input id="userName" type="text" th:field="*{loginName}" />
+
+    <label for="email">email:</label>
+    <input id="email" type="text" th:field="*{mail}" />
+
+    <button type="submit">Submit</button>
+</form>
+</body>
+</html>

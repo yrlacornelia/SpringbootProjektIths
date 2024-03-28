@@ -2,25 +2,30 @@ package com.example.springbootprojektiths.controller;
 
 import com.example.springbootprojektiths.CreateNewMessageForm;
 import com.example.springbootprojektiths.EditMessageForm;
+import com.example.springbootprojektiths.editUserForm;
 import com.example.springbootprojektiths.entity.Message;
+import com.example.springbootprojektiths.entity.User;
 import com.example.springbootprojektiths.repository.MessageRepository;
 import com.example.springbootprojektiths.repository.UserRepository;
 import com.example.springbootprojektiths.service.MessageServices;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -146,8 +151,95 @@ public class WebController {
         }
     }
 
+    @GetMapping("/userSettings")
+    public String userPage( @AuthenticationPrincipal OAuth2User principal, Model model){
+        Object idObject = principal.getAttribute("id");
+        Integer idInteger = (Integer) idObject;
+        Optional<User> userOptional = userRepository.findById(idInteger.longValue());
+        User user = userOptional.get();
+        model.addAttribute("userData", new editUserForm(user.getId(), user.getFullName(), user.getLoginName(), user.getMail()) );
+              return "userSettings";
+    }
+    @PostMapping("/userSettings")
+    public String editUser( @AuthenticationPrincipal OAuth2User principal, Model model, @ModelAttribute("userData") editUserForm userForm ){
+        Object idObject = principal.getAttribute("id");
+        Integer idInteger = (Integer) idObject;
+        Optional<User> userOptional = userRepository.findById(idInteger.longValue());
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
 
+            user.setFullName(userForm.getFullName());
+            user.setLoginName(userForm.getLoginName());
+            user.setMail(userForm.getMail());
 
+            userRepository.save(user);
+            return "userSettings";
+        } else {
+            return "redirect:/error";
+        }
+    }
+
+    public static String UPLOAD_DIRECTORY = System.getProperty("user.dir") + "/uploads";
+
+    @GetMapping("/uploadimage") public String displayUploadForm() {
+        return "test";
+    }
+
+    @PostMapping("/upload") public String uploadImage(Model model, @RequestParam("image") MultipartFile file) throws IOException {
+        StringBuilder fileNames = new StringBuilder();
+        Path fileNameAndPath = Paths.get(UPLOAD_DIRECTORY, file.getOriginalFilename());
+        fileNames.append(file.getOriginalFilename());
+        Files.write(fileNameAndPath, file.getBytes());
+        model.addAttribute("msg", "Uploaded images: " + fileNames.toString());
+        return "test";
+    }
+
+/*    @PostMapping("/upload")
+    @ResponseBody
+    public String uploadFile(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return "Please select a file to upload";
+        }
+
+        try {
+            // Get the file and save it
+            String fileName = file.getOriginalFilename();
+            String filePath = "path/to/your/uploads/" + fileName; // Change this to your desired file path
+            File dest = new File(filePath);
+            file.transferTo(dest);
+            return "File uploaded successfully";
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "Failed to upload file";
+        }
+    }*/
+
+        //Prova denna när vi ska ladda upp profilbild?? Måste ändra i databasen först med flyway.
+//    @PostMapping("/upload")
+//    public String uploadFile(@RequestParam("file") MultipartFile file, @RequestParam("userId") Long userId) {
+//        // Ladda upp filen och spara den på servern
+//        String fileName = file.getOriginalFilename();
+//        String filePath = "/path/to/upload/directory/" + fileName;
+//        try {
+//            File dest = new File(filePath);
+//            file.transferTo(dest);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            return "Failed to upload file.";
+//        }
+//
+//        // Spara sökvägen till filen i användarprofilen
+//        Optional<User> optionalUser = userRepository.findById(userId);
+//        if (optionalUser.isPresent()) {
+//            User user = optionalUser.get();
+//            user.setProfilePicture(filePath);
+//            userRepository.save(user);
+//            return "File uploaded successfully.";
+//        } else {
+//            return "User not found.";
+//        }
+//    }
 }
+
 
 
